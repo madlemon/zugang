@@ -4,7 +4,7 @@ Zugang is a command-line interface (CLI) tool designed to securely connect to re
 
 ## Installation
 
-The Bitwarden CLI is require to use Zugang.
+The Bitwarden CLI needs to be installed to use Zugang.
 
 To install Zugang, follow these steps:
 
