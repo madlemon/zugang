@@ -6,20 +6,32 @@ import (
 	"strings"
 )
 
-const defaultPattern = "plink {USERNAME}@{HOST} -pw {PASSWORD} -no-antispoof"
+type CommandPattern struct {
+	Name string
+	Args []string
+}
 
-func Open(host, username, password string) error {
-	sshCommand := defaultPattern
+func (pattern *CommandPattern) inject(placeholder, value string) {
+	pattern.Name = strings.ReplaceAll(pattern.Name, placeholder, value)
 
-	sshCommand = strings.ReplaceAll(sshCommand, "{HOST}", host)
-	sshCommand = strings.ReplaceAll(sshCommand, "{USERNAME}", username)
-	sshCommand = strings.ReplaceAll(sshCommand, "{PASSWORD}", password)
+	for i, arg := range pattern.Args {
+		pattern.Args[i] = strings.ReplaceAll(arg, placeholder, value)
+	}
+}
 
-	commandParts := strings.Split(sshCommand, " ")
-	mainCommand := commandParts[0]
-	args := commandParts[1:]
+var defaultSshPattern = CommandPattern{
+	Name: "plink",
+	Args: []string{"{USER}@{HOST}", "-pw", "{PASSWORD}", "-no-antispoof"},
+}
 
-	sshCmd := exec.Command(mainCommand, args...)
+func Open(host, user, password string) error {
+	sshPattern := defaultSshPattern
+
+	sshPattern.inject("{HOST}", host)
+	sshPattern.inject("{USER}", user)
+	sshPattern.inject("{PASSWORD}", password)
+
+	sshCmd := exec.Command(sshPattern.Name, sshPattern.Args...)
 
 	// Set standard input/output to the current terminal
 	sshCmd.Stdin = os.Stdin

@@ -14,7 +14,7 @@ import (
 var lockCmd = &cobra.Command{
 	Use:   "lock",
 	Short: "Discards any stored session and locks your vault",
-	Long: `The lock command manually locks your vault in Bitwarden and discards any stored session key.
+	Long: `The lock command manually locks your vault in Bitwarden.
 This effectively revokes access to the vault until it is unlocked again.
 `,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -23,12 +23,6 @@ This effectively revokes access to the vault until it is unlocked again.
 			fmt.Println("Error locking bitwarden vault:", err)
 		} else {
 			fmt.Println("Your vault is locked.")
-		}
-		err = bitwarden.DiscardSession()
-		if err != nil {
-			fmt.Println("Error discarding session:", err)
-		} else {
-			fmt.Println("The session discarded.")
 		}
 	},
 }
