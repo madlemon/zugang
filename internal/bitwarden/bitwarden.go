@@ -45,29 +45,43 @@ func Sync() error {
 	return bwLockCmd.Run()
 }
 
-// Item represents an item returned by Bitwarden
-type Item struct {
+// BwItem represents an item returned by Bitwarden
+type bwItem struct {
 	Id    string `json:"id"`
 	Login struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
+		Uris     []uri  `json:"uris"`
 	} `json:"login"`
 }
 
+type uri struct {
+	Uri string `json:"uri"`
+}
+
+type VaultItem struct {
+	Address  string
+	Username string
+	Password string
+}
+
+const sshProtocolPrefix = "ssh://"
+
 var InvalidMasterPasswordError = fmt.Errorf("invalid master password")
 
-// FindSSHCredentials searches for SSH credentials associated with the specified host in Bitwarden.
-func FindSSHCredentials(host, preferredUser string) (string, string, error) {
-	bwListCmd := exec.Command("bw", "list", "items", "--search", "ssh://"+host, "--pretty")
+// FindVaultItem searches for SSH credentials associated with the specified host in Bitwarden.
+func FindVaultItem(host, preferredUser string) (*VaultItem, error) {
+
+	bwListCmd := exec.Command("bw", "list", "items", "--search", sshProtocolPrefix+host, "--pretty")
 
 	stdin, err := bwListCmd.StdinPipe()
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
 	defer stdin.Close()
 	err = answerMasterPasswordPrompt(stdin)
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
 
 	var stderr bytes.Buffer
@@ -75,42 +89,54 @@ func FindSSHCredentials(host, preferredUser string) (string, string, error) {
 
 	output, err := bwListCmd.Output()
 	if err != nil {
-		return handleBWListError(stderr, err)
+		if strings.Contains(stderr.String(), "Invalid master password") {
+			return nil, InvalidMasterPasswordError
+		}
+		log.Fatalf("Command failed with error: %v\n", err)
 	}
 
-	var items []Item
+	var items []bwItem
 
 	if err := json.Unmarshal(output, &items); err != nil {
-		return "", "", fmt.Errorf("error during deserialazation: %q", err)
+		return nil, fmt.Errorf("error during deserialazation: %q", err)
 	}
 
-	return extractCredentials(items, host, preferredUser)
-}
-
-func handleBWListError(stderr bytes.Buffer, err error) (string, string, error) {
-	if strings.Contains(stderr.String(), "Invalid master password") {
-		return "", "", InvalidMasterPasswordError
+	bwItem, err := findMatchingItem(items, host, preferredUser)
+	if err != nil {
+		return nil, err
 	}
-	log.Fatalf("Command failed with error: %v\n", err)
-	return "", "", nil
+
+	for _, uri := range bwItem.Login.Uris {
+		if strings.HasPrefix(uri.Uri, sshProtocolPrefix) {
+			address := strings.ReplaceAll(uri.Uri, sshProtocolPrefix, "")
+			vaultItem := &VaultItem{
+				Username: bwItem.Login.Username,
+				Password: bwItem.Login.Password,
+				Address:  address,
+			}
+			return vaultItem, nil
+		}
+	}
+
+	return nil, fmt.Errorf("cannot find matching uri")
 }
 
-func extractCredentials(items []Item, host, preferredUser string) (string, string, error) {
+func findMatchingItem(items []bwItem, host, preferredUser string) (*bwItem, error) {
 	if len(items) < 1 {
-		return "", "", fmt.Errorf("did not find credentials for host %s in your vaults", host)
+		return nil, fmt.Errorf("did not find credentials for host %s in your vaults", host)
 	}
 
 	if preferredUser != "" {
 		for _, item := range items {
 			if item.Login.Username == preferredUser {
-				return item.Login.Username, item.Login.Password, nil
+				return &item, nil
 			}
 		}
 	}
 
 	if len(items) == 1 {
-		return items[0].Login.Username, items[0].Login.Password, nil
+		return &items[0], nil
 	}
 
-	return "", "", fmt.Errorf("Found multiple users within your vaults\nChoose a preferred user by providing the user flag (-u or --user)")
+	return nil, fmt.Errorf("Found multiple users within your vaults\nChoose a preferred user by providing the user flag (-u or --user)")
 }

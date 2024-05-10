@@ -30,21 +30,21 @@ If successful, it attempts to open the SSH connection.
 	Run: func(cmd *cobra.Command, args []string) {
 		host := args[0]
 
+		port, _ := cmd.Flags().GetInt("port")
 		specificUser, _ := cmd.Flags().GetString("user")
 		hostKeyCheckEnabled, _ := cmd.Flags().GetBool("hostKeyCheck")
 
-		username, password, err := bitwarden.FindSSHCredentials(host, specificUser)
+		vaultItem, err := bitwarden.FindVaultItem(host, specificUser)
 		if err != nil {
 			fmt.Println("Failed finding SSH credentials:", err)
 			return
 		}
 
-		fmt.Println("Connecting to", host, "as", username)
-
 		sshConf := &ssh.Conf{
-			Host:                host,
-			User:                username,
-			Password:            password,
+			Address:             vaultItem.Address,
+			PortOverride:        port,
+			User:                vaultItem.Username,
+			Password:            vaultItem.Password,
 			HostKeyCheckEnabled: hostKeyCheckEnabled,
 		}
 		ssh.Connect(sshConf)
@@ -55,6 +55,7 @@ func init() {
 	rootCmd.AddCommand(loginCmd)
 
 	// Here you will define your flags and configuration settings.
-	loginCmd.Flags().StringP("user", "u", "", "connect with specified username")
-	loginCmd.Flags().Bool("hostKeyCheck", true, "enable/disable host key check")
+	loginCmd.Flags().StringP("user", "u", "", "Specifies the user used to connect to the remote host.")
+	loginCmd.Flags().IntP("port", "p", 0, "Port override to connect to on the remote host. (default any port specified in the URL pattern in the vault or 22)")
+	loginCmd.Flags().Bool("hostKeyCheck", true, "Enables/disables host key check.")
 }
