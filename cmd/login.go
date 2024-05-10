@@ -1,6 +1,3 @@
-/*
-Copyright © 2024 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
@@ -18,6 +15,15 @@ If no Bitwarden session is active you may be prompted for the master password to
 Credentials within your vault need the following URL pattern "ssh://{host}" to be eligible as credentials for the given host.
 If multiple credentials exists for a host you need to specify a specific user using the --user or -u flag.
 If successful, it attempts to open the SSH connection.
+
+- To connect to a remote host named "example.com":
+    zugang login example.com
+
+- To specify a specific username when connecting to a remote host:
+    zugang login example.com --user myusername
+
+- To disable host key checks when connecting to a remote host (use with caution):
+    zugang login example.com --hostKeyCheck=false
 `,
 	Use:  "login <host> [flags]",
 	Args: cobra.ExactArgs(1),

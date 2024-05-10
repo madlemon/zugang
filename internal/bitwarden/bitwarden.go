@@ -12,6 +12,7 @@ import (
 	"strings"
 )
 
+// CheckForExecutable checks if the Bitwarden CLI executable is available in the system's PATH.
 func CheckForExecutable() {
 	_, err := exec.LookPath("bw")
 	if err != nil {
@@ -19,6 +20,7 @@ func CheckForExecutable() {
 	}
 }
 
+// answerMasterPasswordPrompt prompts the user for the master password to provide to the Bitwarden CLI when prompted.
 func answerMasterPasswordPrompt(stdin io.WriteCloser) error {
 	fmt.Print("? Master password: [input is hidden]")
 	masterPassword, err := terminal.ReadPassword(int(os.Stdin.Fd()))
@@ -37,11 +39,13 @@ func answerMasterPasswordPrompt(stdin io.WriteCloser) error {
 	return nil
 }
 
+// Sync synchronizes local data with the Bitwarden server.
 func Sync() error {
 	bwLockCmd := exec.Command("bw", "sync")
 	return bwLockCmd.Run()
 }
 
+// Item represents an item returned by Bitwarden
 type Item struct {
 	Id    string `json:"id"`
 	Login struct {
@@ -51,8 +55,8 @@ type Item struct {
 }
 
 var InvalidMasterPasswordError = fmt.Errorf("invalid master password")
-var ExpiredSessionError = fmt.Errorf("bw session in env expired")
 
+// FindSSHCredentials searches for SSH credentials associated with the specified host in Bitwarden.
 func FindSSHCredentials(host, preferredUser string) (string, string, error) {
 	bwListCmd := exec.Command("bw", "list", "items", "--search", "ssh://"+host, "--pretty")
 
@@ -86,10 +90,6 @@ func FindSSHCredentials(host, preferredUser string) (string, string, error) {
 func handleBWListError(stderr bytes.Buffer, err error) (string, string, error) {
 	if strings.Contains(stderr.String(), "Invalid master password") {
 		return "", "", InvalidMasterPasswordError
-	}
-	if strings.Contains(stderr.String(), "? Master password:") {
-		log.Println(stderr.String())
-		return "", "", ExpiredSessionError
 	}
 	log.Fatalf("Command failed with error: %v\n", err)
 	return "", "", nil

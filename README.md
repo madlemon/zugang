@@ -1,4 +1,70 @@
-https://b-nova.com/en/home/content/how-to-build-an-elegant-cli-tool-with-cobra-in-only-fifteen-minutes/
+# Zugang CLI Documentation
 
+Zugang is a command-line interface (CLI) tool designed to securely connect to remote hosts via SSH using credentials stored in your Bitwarden vault.
 
-C:\Users\klocke\sdk\go1.22.1\bin;C:\Users\klocke\go\bin;C:\Users\klocke\sdk\go1.22.1\bin;C:\Users\klocke\go\bin;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\NVIDIA Corporation\NVIDIA NvDLISR;C:\Program Files\PuTTY\;C:\ProgramData\chocolatey\bin;C:\Program Files\Docker\Docker\resources\bin;C:\ProgramData\DockerDesktop\version-bin;C:\Program Files\dotnet\;C:\Program Files\nodejs\;C:\Program Files\Amazon\AWSCLIV2\;C:\Program Files\WireGuard\;C:\Program Files\Go\bin;C:\Program Files\Git\cmd;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\OpenSSH-Win64;C:\Users\klocke\AppData\Local\Microsoft\WindowsApps;C:\Users\klocke\AppData\Roaming\npm;C:\Program Files\OpenSSL-Win64\bin;C:\Users\klocke\go\bin;C:\Users\klocke\AppData\Local\Microsoft\WindowsApps;C:\Users\klocke\IdeaProjects\zugang
+## Installation
+
+To install Zugang, follow these steps:
+
+1. Clone the repository:
+   ```
+   git clone <repository_url>
+   ```
+
+2. Navigate to the project directory:
+   ```
+   cd zugang
+   ```
+
+3. Build the application:
+   ```
+   go build
+   ```
+
+4. Optionally, you can move the binary to a directory in your PATH to make it globally accessible.
+
+## Usage
+
+Zugang provides two main commands: `login` and `sync`.
+
+### Login
+
+The `login` command enables you to connect to a remote host using credentials from your Bitwarden vault.
+
+```
+zugang login <host> [flags]
+```
+
+#### Flags
+
+- `--user`, `-u`: Specify a specific username when connecting to the remote host.
+- `--hostKeyCheck`: Enable or disable host key checks when connecting to the remote host.
+
+#### Examples
+
+- To connect to a remote host named "example.com":
+  ```
+  zugang login example.com
+  ```
+
+- To specify a specific username when connecting to a remote host:
+  ```
+  zugang login example.com --user myusername
+  ```
+
+- To disable host key checks when connecting to a remote host (use with caution):
+  ```
+  zugang login example.com --hostKeyCheck=false
+  ```
+
+### Sync
+
+The `sync` command pulls the latest vault data from the Bitwarden server.
+
+```
+zugang sync
+```
+
+## License
+
+Zugang is licensed under the [GLWTS License](LICENSE).

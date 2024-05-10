@@ -1,6 +1,3 @@
-/*
-Copyright © 2024 NAME HERE klocke@volavis.de
-*/
 package cmd
 
 import (
@@ -9,18 +6,17 @@ import (
 	"zugang/internal/bitwarden"
 )
 
-var BWSessionKey string
-
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "zugang",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
+	Short: "Securely connect to remote hosts via SSH using credentials stored in your Bitwarden vault.",
+	Long: `zugang is a CLI tool for securely connecting to remote hosts via SSH using credentialsstored in your Bitwarden vault.
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+- To connect to a remote host named "example.com":
+    zugang login example.com
+
+- To sync the latest vault data from the server:
+    zugang sync`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

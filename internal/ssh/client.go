@@ -12,13 +12,17 @@ import (
 	"time"
 )
 
+// Conf represents the configuration parameters for establishing an SSH connection.
 type Conf struct {
 	Host                string
 	User                string
 	Password            string
-	HostKeyCheckEnabled bool
+	HostKeyCheckEnabled bool // HostKeyCheckEnabled determines whether host key checking is enabled or not.
 }
 
+// Connect initiates an SSH connection using the provided configuration. It handles signals for termination
+// (SIGTERM, SIGINT), sets up a context, and runs the SSH session. It cancels the context when the session ends
+// or upon receiving a termination signal.
 func Connect(conf *Conf) {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGTERM, syscall.SIGINT)
@@ -38,6 +42,7 @@ func Connect(conf *Conf) {
 	}
 }
 
+// startClientConnection establishes an SSH client connection to the specified host using the provided configuration.
 func startClientConnection(conf *Conf) (*ssh.Client, error) {
 	clientConfig := &ssh.ClientConfig{
 		User: conf.User,
@@ -53,6 +58,7 @@ func startClientConnection(conf *Conf) (*ssh.Client, error) {
 	return conn, err
 }
 
+// run executes an interactive SSH session using the provided configuration.
 func run(ctx context.Context, conf *Conf) error {
 	conn, err := startClientConnection(conf)
 	if err != nil {

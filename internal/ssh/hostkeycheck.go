@@ -12,6 +12,9 @@ import (
 	"strings"
 )
 
+// configureHostKeyCallback creates an SSH host key callback function based on whether host key checking is enabled or not.
+// If host key checking is enabled, it creates a callback function using the known_hosts file. Otherwise, it uses an insecure
+// callback function that ignores host key verification.
 func configureHostKeyCallback(hostKeyCheckEnabled bool) ssh.HostKeyCallback {
 	var hostKeyCallback ssh.HostKeyCallback
 	if hostKeyCheckEnabled {
@@ -26,6 +29,8 @@ func configureHostKeyCallback(hostKeyCheckEnabled bool) ssh.HostKeyCallback {
 	return hostKeyCallback
 }
 
+// hostKeyCallbackFromKnownHosts creates an ssh.HostKeyCallback based on the known_hosts file.
+// It prompts the user to confirm adding new host keys if necessary.
 func hostKeyCallbackFromKnownHosts() (ssh.HostKeyCallback, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -66,6 +71,7 @@ func hostKeyCallbackFromKnownHosts() (ssh.HostKeyCallback, error) {
 	return cb, nil
 }
 
+// askAddToKnownHosts prompts the user to confirm whether they want to add the fingerprint to the known_hosts file
 func askAddToKnownHosts() bool {
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
