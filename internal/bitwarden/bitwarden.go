@@ -12,27 +12,6 @@ import (
 	"strings"
 )
 
-func unlock() (string, error) {
-	bwUnlockCmd := exec.Command("bw", "unlock", "--raw")
-
-	stdin, err := bwUnlockCmd.StdinPipe()
-	if err != nil {
-		return "", err
-	}
-	defer stdin.Close()
-	err = answerMasterPasswordPrompt(stdin)
-	if err != nil {
-		return "", err
-	}
-
-	sessionKey, err := bwUnlockCmd.Output()
-	if err != nil {
-		return "", err
-	}
-
-	return string(sessionKey[:]), nil
-}
-
 func answerMasterPasswordPrompt(stdin io.WriteCloser) error {
 	fmt.Print("? Master password: [input is hidden]")
 	masterPassword, err := terminal.ReadPassword(int(os.Stdin.Fd()))
@@ -51,26 +30,13 @@ func answerMasterPasswordPrompt(stdin io.WriteCloser) error {
 	return nil
 }
 
-func Lock() error {
-	bwLockCmd := exec.Command("bw", "lock")
-	return bwLockCmd.Run()
-}
-
-func Unlock() (string, error) {
-	sessionKey, err := unlock()
-	if err != nil {
-		return "", fmt.Errorf("error unlocking your vault: %v", err)
-	}
-
-	return sessionKey, nil
-}
-
 func Sync() error {
 	bwLockCmd := exec.Command("bw", "sync")
 	return bwLockCmd.Run()
 }
 
 type Item struct {
+	Id    string `json:"id"`
 	Login struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
@@ -83,18 +49,16 @@ var ExpiredSessionError = fmt.Errorf("bw session in env expired")
 func FindSSHCredentials(host, preferredUser string) (string, string, error) {
 	bwListCmd := exec.Command("bw", "list", "items", "--search", "ssh://"+host, "--pretty")
 
-	_, sessionPresent := os.LookupEnv("BW_SESSION")
-	if !sessionPresent {
-		stdin, err := bwListCmd.StdinPipe()
-		if err != nil {
-			return "", "", err
-		}
-		defer stdin.Close()
-		err = answerMasterPasswordPrompt(stdin)
-		if err != nil {
-			return "", "", err
-		}
+	stdin, err := bwListCmd.StdinPipe()
+	if err != nil {
+		return "", "", err
 	}
+	defer stdin.Close()
+	err = answerMasterPasswordPrompt(stdin)
+	if err != nil {
+		return "", "", err
+	}
+
 	var stderr bytes.Buffer
 	bwListCmd.Stderr = &stderr
 
@@ -112,13 +76,79 @@ func FindSSHCredentials(host, preferredUser string) (string, string, error) {
 	return extractCredentials(items, host, preferredUser)
 }
 
-func authenticateWithMasterPassword(cmd *exec.Cmd) error {
-	stdin, err := cmd.StdinPipe()
+func FindSSHPrivateKey(host, preferredUser string) (string, error) {
+	bwListCmd := exec.Command("bw", "list", "items", "--search", "ssh://"+host, "--pretty")
+	fmt.Print("? Master password: [input is hidden]")
+	masterPassword, err := terminal.ReadPassword(int(os.Stdin.Fd()))
 	if err != nil {
-		return err
+		return "", err
+	}
+	fmt.Println()
+
+	stdin, err := bwListCmd.StdinPipe()
+	if err != nil {
+		return "", err
 	}
 	defer stdin.Close()
-	return answerMasterPasswordPrompt(stdin)
+
+	go func() {
+		defer stdin.Close()
+		_, err := stdin.Write(masterPassword)
+		if err != nil {
+			log.Fatal("Error providing the master password to bw prompt", err)
+		}
+	}()
+
+	var stderr bytes.Buffer
+	bwListCmd.Stderr = &stderr
+
+	output, err := bwListCmd.Output()
+	if err != nil {
+		return "", err
+	}
+
+	var items []Item
+
+	if err := json.Unmarshal(output, &items); err != nil {
+		return "", err
+	}
+
+	if len(items) < 1 {
+		return "", fmt.Errorf("did not find credentials for host %s in your vaults", host)
+	}
+
+	itemId := ""
+	username := ""
+	if preferredUser != "" {
+		for _, item := range items {
+			if item.Login.Username == preferredUser {
+				itemId = item.Id
+				username = item.Login.Username
+			}
+		}
+	}
+
+	if len(items) == 1 {
+		itemId = items[0].Id
+		username = items[0].Login.Username
+	}
+
+	bwGetAttachementCmd := exec.Command("bw", "get", "attachment", "--itemid", itemId, "--output", "./temp.pem")
+	stdin2, err := bwGetAttachementCmd.StdinPipe()
+	if err != nil {
+		return "", err
+	}
+	defer stdin2.Close()
+
+	go func() {
+		defer stdin2.Close()
+		_, err := stdin2.Write(masterPassword)
+		if err != nil {
+			log.Fatal("Error providing the master password to bw prompt", err)
+		}
+	}()
+
+	return username, nil
 }
 
 func handleBWListError(stderr bytes.Buffer, err error) (string, string, error) {

@@ -4,7 +4,6 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"errors"
 	"fmt"
 	"github.com/spf13/cobra"
 	"zugang/internal/bitwarden"
@@ -29,23 +28,18 @@ If successful, it attempts to open the SSH connection.
 
 		username, password, err := bitwarden.FindSSHCredentials(host, specificUser)
 		if err != nil {
-			if errors.Is(err, bitwarden.ExpiredSessionError) {
-				fmt.Println(`
-The session in the 'BW_SESSION' environment variable is expired. Remove the value from the env variable and try again. ex:
-	$ export BW_SESSION=""
-	> $env:BW_SESSION=""`)
-				return
-			}
 			fmt.Println("Failed finding SSH credentials:", err)
 			return
 		}
 
 		fmt.Println("Connecting to", host, "as", username)
-		err = ssh.Open(host, username, password)
-		if err != nil {
-			fmt.Println("Error opening SSH connection:", err)
-			return
-		}
+
+		ssh.OpenWithGolang(host, username, password)
+		//ssh.OpenWithPattern(host, username, password)
+		//if err != nil {
+		//	fmt.Println("Error opening SSH connection:", err)
+		//	return
+		//}
 	},
 }
 
