@@ -1,4 +1,4 @@
-# Zugang CLI Documentation
+# Zugang CLI
 
 Zugang is a command-line interface (CLI) tool designed to securely connect to remote hosts via SSH using credentials stored in your Bitwarden vault.
 
