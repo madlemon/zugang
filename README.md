@@ -29,7 +29,7 @@ Zugang provides two main commands: `login` and `sync`.
 
 ### Login
 
-The `login` command enables you to connect to a remote host using credentials from your Bitwarden vault.
+The `login` command enables you to connect to a remote host using credentials from your Bitwarden vault. Credentials within your vault need the following URL pattern "ssh://{host}" to be eligible as credentials for the given host.
 
 ```
 zugang login <host> [flags]
