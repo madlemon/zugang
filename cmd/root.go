@@ -4,9 +4,9 @@ Copyright © 2024 NAME HERE klocke@volavis.de
 package cmd
 
 import (
-	"os"
-
 	"github.com/spf13/cobra"
+	"os"
+	"zugang/internal/bitwarden"
 )
 
 var BWSessionKey string
@@ -33,6 +33,7 @@ func Execute() {
 }
 
 func init() {
+	bitwarden.CheckForExecutable()
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
