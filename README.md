@@ -4,6 +4,8 @@ Zugang is a command-line interface (CLI) tool designed to securely connect to re
 
 ## Installation
 
+The Bitwarden CLI is require to use Zugang.
+
 To install Zugang, follow these steps:
 
 1. Clone the repository:
@@ -16,12 +18,10 @@ To install Zugang, follow these steps:
    cd zugang
    ```
 
-3. Build the application:
+3. Install the application:
    ```
-   go build
+   go install
    ```
-
-4. Optionally, you can move the binary to a directory in your PATH to make it globally accessible.
 
 ## Usage
 
@@ -38,6 +38,7 @@ zugang login <host> [flags]
 #### Flags
 
 - `--user`, `-u`: Specify a specific username when connecting to the remote host.
+- `--port`, `-p`: Port override to connect to on the remote host.
 - `--hostKeyCheck`: Enable or disable host key checks when connecting to the remote host.
 
 #### Examples
