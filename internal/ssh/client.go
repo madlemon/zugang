@@ -38,6 +38,21 @@ func Connect(conf *Conf) {
 	}
 }
 
+func startClientConnection(conf *Conf) (*ssh.Client, error) {
+	clientConfig := &ssh.ClientConfig{
+		User: conf.User,
+		Auth: []ssh.AuthMethod{
+			ssh.Password(conf.Password),
+		},
+		Timeout:         5 * time.Second,
+		HostKeyCallback: configureHostKeyCallback(conf.HostKeyCheckEnabled),
+	}
+
+	hostport := fmt.Sprintf("%s:%d", conf.Host, 22)
+	conn, err := ssh.Dial("tcp", hostport, clientConfig)
+	return conn, err
+}
+
 func run(ctx context.Context, conf *Conf) error {
 	conn, err := startClientConnection(conf)
 	if err != nil {
@@ -94,19 +109,4 @@ func run(ctx context.Context, conf *Conf) error {
 		return fmt.Errorf("ssh: %s", err)
 	}
 	return nil
-}
-
-func startClientConnection(conf *Conf) (*ssh.Client, error) {
-	clientConfig := &ssh.ClientConfig{
-		User: conf.User,
-		Auth: []ssh.AuthMethod{
-			ssh.Password(conf.Password),
-		},
-		Timeout:         5 * time.Second,
-		HostKeyCallback: configureHostKeyCallback(conf.HostKeyCheckEnabled),
-	}
-
-	hostport := fmt.Sprintf("%s:%d", conf.Host, 22)
-	conn, err := ssh.Dial("tcp", hostport, clientConfig)
-	return conn, err
 }
